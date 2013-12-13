@@ -53,12 +53,12 @@ for data in fileData:
         temp.append([start, end, weight])
     edgesList.append(temp)
 
-## define djikstra's algorithm
+## define dijkstra's algorithm
 
 #define the maximum integer value
 MAX_INT = 9999999999
 
-def djikstra(edges, start, end, n):
+def dijkstra(edges, start, end, n):
     
     #create the graph dictionary
     graph = {}
@@ -148,7 +148,7 @@ def djikstra(edges, start, end, n):
 
     return {"path": finalPath, "weight": totalWeight}
     
-## run djikstra's algorithm for the data that was read in
+## run dijkstra's algorithm for the data that was read in
 
 i = 0
 for edges in edgesList:
@@ -160,7 +160,7 @@ for edges in edgesList:
     print "Start: ", start
     print "End:   ", end
     
-    output = djikstra(edges, start, end, vertexCount[i])
+    output = dijkstra(edges, start, end, vertexCount[i])
     i += 1
     
     #output shortest path and weight in the required format
