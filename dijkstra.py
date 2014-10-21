@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import glob
 import sys
@@ -6,174 +6,188 @@ import math
 import copy
 import string
 
-## read in data files
-
-#generate list of files
-fileList = glob.glob("./input/*")
-
-#will hold the maps
-fileData = []
-
-#will hold the number of vertices in each map
-vertexCount = []
-
-for file in fileList:
-    #open file for reading
-    data = open(file, "r").read()
-    
-    #split the files on their newlines and store the vertices in a separate list
-    temp = data.splitlines()
-    vertexCount.append(int(temp[0]))
-    temp.pop(0)
-    
-    #append the temp list to fileData (deep copy to ensure we don't have references)
-    fileData.append(copy.deepcopy(temp))
-
-## for each read in data set, construct a graph
-
-#each element of this list is another list containing the edge and its weight
-edgesList = []
-
-#create the graph for each data set
-for data in fileData:
-    temp = []
-    for edge in data:
-        #parse the string into its components
-        start = edge[0]
-        end = edge[2]
-        
-        #ugly way to account for 2 and 3 digit weights in text file
-        if len(edge) == 7:
-            weight = int(edge[4] + edge[5] + edge[6])
-        elif len(edge) == 6:
-                weight = int(edge[4] + edge[5])
-        else:
-            weight = int(edge[4])
-        
-        temp.append([start, end, weight])
-    edgesList.append(temp)
-
-## define dijkstra's algorithm
-
-#define the maximum integer value
+# constants
+START = 'A'
+END = 'B'
 MAX_INT = 9999999999
 
-def dijkstra(edges, start, end, n):
+"""
+    Read in the data file specified by file_path.
     
-    #create the graph dictionary
+    Parameters
+    ----------
+    file_path: string
+        Path to the file we want to parse.
+        
+    Returns
+    -------
+    dictionary
+"""
+def read_datafile(file_path):
+    data = open(file_path, 'r').read()
+    
+    # parse then pop the first line, which contains the vertex count
+    file_lines = data.splitlines()
+    vertex_count = int(file_lines[0])
+    file_lines.pop(0)
+    
+    # return the vertex count and the list of edges (deep copy edges to ensure we don't have references)
+    return { 'vertex_count': vertex_count, 'edges': copy.deepcopy(file_lines) }
+
+"""
+    Build a graph out of the list of edge strings.
+    
+    Parameters
+    ----------
+    raw_edges: list
+        List of strings in the form: 'A B 20' representing START END WEIGHT.
+        
+    Returns
+    -------
+    list 
+"""
+def build_graph(raw_edges):
+    # each element of this list is a dictionary that represents an edge and its weight.
+    edge_list = []
+    
+    # parse each of the edge strings
+    for edge in raw_edges:
+        edge_data = edge.split()
+        edge_list.append({ 'start': edge_data[0], 'end': edge_data[1], 'weight': int(edge_data[2]) })
+    
+    return edge_list
+
+"""
+    Dijkstra's Algorithm
+    
+    Parameters
+    ----------
+    edges: list
+        List of dicts where each dict is an edge. Eg. { 'start': 'A', 'end': 'B', 'weight': 20 }
+    start: string
+        A-Z letter representing the start node.
+    end: string
+        A-Z letter representing the end node.
+    n: int
+        The number of vertices in the graph.
+    
+    Returns
+    -------
+    dictionary
+"""
+def dijkstra(edges, start, end, n):
     graph = {}
     
-    #construct a dictionary with all the vertices of the graph (using the alphabet since our inputs are alphabetical).
+    # build dict with all the vertices of the graph (using the alphabet since our inputs are alphabetical).
     for letter in list(string.uppercase[:n]):
         graph[letter] = {}
     
-    #for each vertex in the graph, go through the entire edges list and connect the vertices together along with their weights
+    # for each vertex in the graph, go through the entire edges list and connect the vertices together along with their weights
     for vertex in graph:
         for edge in edges:
-            if edge[0] == vertex:
-                graph[vertex][edge[1]] = edge[2]
+            if edge['start'] == vertex:
+                graph[vertex][edge['end']] = edge['weight']
     
-    #initialize predecessor, a dictionary that keeps track of the final path. the predecessor of the start vertex is initialized to zero so we know where to begin
-    predecessor = {start: 0}
+    # keeps track of the final path. the predecessor of the start vertex is initialized to zero so we know where to begin
+    predecessor = { start: 0 }
     
-    #initialize distances, a dictionary that keeps track of the shortest path length to a certain vertex from the start vertex
+    # keeps track of the shortest path length to a certain vertex from the start vertex
     distances = {}
     
-    #initialize all the distance values to the maximum int value
+    # initialize all the distance values to the maximum int value
     for vertex in graph:
         distances[vertex] = MAX_INT
     
-    #the starting vertex has an automatic distance of 0
+    # the starting vertex has an automatic distance of 0
     distances[start] = 0
     
-    #initialize visited, a list that keeps track of all the visited vertices of the graph
+    # initialize visited, a list that keeps track of all the visited vertices of the graph
     visited = [start]
     
-    #run an infinite loop that begins with the starting vertex and works its way through the graph
+    # run an infinite loop that begins with the starting vertex and works its way through the graph
     vertex = start
     while 1:
         if vertex == end:
             break
         else:
-            #take current vertex's distance 
-            currentVertexDistance = distances[vertex]
+            # take current vertex's distance 
+            current_vertex_distance = distances[vertex]
             
-            #take all current vertex's adjacent neighbors
+            # take all current vertex's adjacent neighbors
             neighbors = graph[vertex]
             
             for neighbor in neighbors:
-                #check that the vertex is unvisited
+                # check that the vertex is unvisited
                 if not neighbor in visited:
-                    #find the weight from the current vertex to the neighbor we are currently considering
-                    tempWeight = neighbors[neighbor] + currentVertexDistance
+                    # find the weight from the current vertex to the neighbor we are currently considering
+                    temp_weight = neighbors[neighbor] + current_vertex_distance
                     
-                    #if the newly calculated weight is less than the weight we have stored for that vertex, we've found a shorter path to that vertex and we can update it accordingly
-                    if tempWeight < distances[neighbor]:
-                        distances[neighbor] = tempWeight
-                        #set the predecessor of the new low cost vertex to be the current vertex
+                    # if the newly calculated weight is less than the weight we have stored for that vertex, we've found a shorter path to that vertex and we can update it accordingly
+                    if temp_weight < distances[neighbor]:
+                        distances[neighbor] = temp_weight
+                        
+                        # set the predecessor of the new low cost vertex to be the current vertex
                         predecessor[neighbor] = vertex
             
-            #now that all the weights are updated, select the next unvisited vertex with the lowest weight to be the next vertex we visit    
-            minValue = MAX_INT
-            nextVertex = 0
+            # now that all the weights are updated, select the next unvisited vertex with the lowest weight to be the next vertex we visit    
+            min_value = MAX_INT
+            next_vertex = 0
             
-            for distanceVertex, distanceValue in distances.iteritems():
-                if not distanceVertex in visited:
-                    if distanceValue < minValue:
-                        minValue = distanceValue
-                        nextVertex = distanceVertex
+            for distance_vertex, distance_value in distances.iteritems():
+                if not distance_vertex in visited:
+                    if distance_value < min_value:
+                        min_value = distance_value
+                        next_vertex = distance_vertex
             
-            #add the next vertex to the visited list
-            visited.append(nextVertex)
+            # add the next vertex to the visited list
+            visited.append(next_vertex)
             
-            #set the next vertex to be considered as the vertex selected with the lowest weight
-            vertex = nextVertex
+            # set the next vertex to be considered as the vertex selected with the lowest weight
+            vertex = next_vertex
             
-    #create the final path from the adjacency list, starting from the last element
-    currentVertex = end
-    finalPath = [end]
-    totalWeight = 0
+    # create the final path from the adjacency list, starting from the last element
+    current_vertex = end
+    final_path = [end]
+    total_weight = 0
+    
     while 1:
-        if currentVertex == start:
+        if current_vertex == start:
             break
         
-        #progressively add edge weights to find the total weight of the path
+        # progressively add edge weights to find the total weight of the path
         for edge in edges:
-            if edge[0] == predecessor[currentVertex] and edge[1] == currentVertex:
-                totalWeight += edge[2]
+            if edge['start'] == predecessor[current_vertex] and edge['end'] == current_vertex:
+                total_weight += edge['weight']
         
-        #traverse the linked list backwards to find the predecessor of each vertex in the final path
-        finalPath.insert(0, predecessor[currentVertex])
-        currentVertex = predecessor[currentVertex]
+        # traverse the linked list backwards to find the predecessor of each vertex in the final path
+        final_path.insert(0, predecessor[current_vertex])
+        current_vertex = predecessor[current_vertex]
 
-    return {"path": finalPath, "weight": totalWeight}
-    
-## run dijkstra's algorithm for the data that was read in
+    return { 'path': final_path, 'weight': total_weight }
 
-i = 0
-for edges in edgesList:
-    start = "A"
-    end = "B"
+"""
+    Driver function that gets all the files in the input/ directory, runs dijkstra's algorithm, and prints the output.
+"""
+def main():
+    # get list of available input files
+    input_files = glob.glob('./input/*')
     
-    print "\n"
-    print "Vertices: ", vertexCount[i]
-    print "Start: ", start
-    print "End:   ", end
-    
-    output = dijkstra(edges, start, end, vertexCount[i])
-    i += 1
-    
-    #output shortest path and weight in the required format
-    pathString = ""
-    for vertex in output["path"]:
-        pathString += (vertex + " ")
-    
-    print "Final Weight: ", output["weight"]
-    print "Final Path: ", pathString
-    
-    outputText = str(output["weight"]) + "\n" + pathString
-    
-    file = open("output/Solution" + str(i) + ".txt", "w")
-    file.write(outputText)
-    
-    
+    # parse each data file, build the graph, and run dijkstra's algorithm on the graph
+    for input_file in input_files:
+        parsed_data = read_datafile(input_file)
+        edge_list = build_graph(parsed_data['edges'])
+
+        print '\n********************************************************'
+        print 'Vertices: {}'.format(parsed_data['vertex_count'])
+        print 'Start: {}'.format(START)
+        print 'End: {}'.format(END)
+        
+        output = dijkstra(edge_list, START, END, parsed_data['vertex_count'])
+        
+        print 'Final Weight: {}'.format(output['weight'])
+        print 'Final Path: {}'.format(' '.join(output['path']))
+        print ''
+
+if __name__ == '__main__':
+    main()
+            
