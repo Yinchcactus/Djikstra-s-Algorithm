@@ -10,18 +10,18 @@ The graph builder expects a certain format for input files. It will understand t
 
 1. The first line of the file is an integer with the number of vertices the graph.
 
-2. The starting point for each graph is labeled `A`, and the ending point is labeled `B`. The first line of each input file represents the number of vertices in the graph.
+2. The starting point for each graph is labeled `A`, and the ending point is labeled `B`. This can be altered in the `constants` section.
 
-3. Letters must be used in alphabetical order. For instance, if your graph has 5 vertices you can only use the letters A, B, C, D, E.
+3. Letters must be used in alphabetical order. For instance, if your graph has 5 vertices you can only use the letters `A`, `B`, `C`, `D`, `E`.
 
-4. Each line (after the first line) is in the form START END WEIGHT, delimited by spaces.
+4. Each line (after the first line) is in the form `START END WEIGHT`, delimited by spaces.
 
 Sample input files are included in the `input` directory. Without modification, the script will automatically read in all files in the input directory.
 
 Obviously you can change the code to suit your needs, but it's important to understand how it's currently set up.
 
 ####E.g.
-In the example input snippet below, there are 10 vertices in the graph (A...J)
+In the example input snippet below, there are 10 vertices in the graph (`A`...`J`).
 
 ```
 10
